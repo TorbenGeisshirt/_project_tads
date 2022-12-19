@@ -1,13 +1,17 @@
 
 package domain;
 
+import core.KeyValuePair;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
 
+import java.util.Map;
 import java.util.List;
+import java.util.HashMap;
 import java.util.ArrayList;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -51,10 +55,14 @@ public class Document
     
     //#region Members
 
+    private Integer termCount = 0;
+
     private String content = null;
     private String filepath = null;
     private PDDocument document = null;
     private List<Module> modules = null;
+    
+    private final Map<String, Integer> termFrequency = new HashMap<>();
 
     //#endregion
 
@@ -76,6 +84,11 @@ public class Document
         return filepath;
     }
 
+    public Integer getTermCount()
+    {
+        return termCount;
+    }
+    
     public PDDocument getDocument()
     {
         return document;
@@ -85,10 +98,32 @@ public class Document
     {
         return modules;
     }
-    
+
     //#endregion
 
     //#region Public Methods
+
+    public void setTerm(String term)
+    {
+        this.termCount++;
+
+        Integer frequency = null;
+
+        if (termFrequency.containsKey(term))
+        {
+            frequency = termFrequency.get(term);
+            frequency++;
+        }
+
+        termFrequency.put(term, frequency == null ? 1 : frequency);
+    }
+
+    public Integer getTermFrequency(String term)
+    {
+        return termFrequency.containsKey(term) 
+                ? termFrequency.get(term) 
+                : null;
+    }
 
     public void writeDocumentToFile(String filepath) 
         throws 

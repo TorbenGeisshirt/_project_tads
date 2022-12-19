@@ -200,8 +200,8 @@ public class Engine
             return null;
 
         StringBuilder indexBuilder = new StringBuilder();
-
-        for (Module module : this.document.getModules()) 
+            
+        for (Module module : document.getModules()) 
         {
             Analyzer analyzer = new EnglishAnalyzer();
             
@@ -234,6 +234,7 @@ public class Engine
                         .append(" ");
 
                     module.setTerm(term);
+                    document.setTerm(term);                  
                 }
 
                 tokenStream.end();
@@ -259,6 +260,34 @@ public class Engine
                 .append(System.getProperty("line.separator"));
 
             analyzer.close();
+        }
+
+        for (Module module : document.getModules()) 
+        {
+            for (String term : module.getTerms()) 
+            {
+                double docCnt = ( double )(document.getModules().size() );
+                double docOcc = 1;
+
+                for (Module x : document.getModules())
+                    if (x.getTerms().contains(term))
+                        docOcc++;
+
+                double modCnt = module.getTermCount().doubleValue();
+                double modFrq = module.getTermFrequency(term).doubleValue();
+
+                double idf = Math.log(
+                    docCnt / docOcc
+                    );
+                    
+                double tf = modFrq / modCnt;
+    
+                double termTfIdf = (tf * idf);
+    
+                module.setTermTfIdf(
+                    term, termTfIdf
+                    );
+            }
         }
 
         return indexBuilder.toString();

@@ -1,8 +1,14 @@
 
 package domain;
 
+import core.KeyValuePair;
+
+import java.util.Set;
 import java.util.Map;
+import java.util.List;
 import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.PriorityQueue;
 
 public class Module 
 {
@@ -21,11 +27,13 @@ public class Module
     }
     
     //#region Members
-
+    
     private String title = null;
     private String index = null;
     private String content = null;
+    private Integer termCount = 0;
 
+    private final Map<String, Double>  termTfIdf = new HashMap<>();  
     private final Map<String, Integer> termFrequency = new HashMap<>();
     private final Map<String, Integer> biGramFrequency = new HashMap<>();
     private final Map<String, Integer> triGramFrequency = new HashMap<>();
@@ -50,6 +58,16 @@ public class Module
         return content;
     }
 
+    public Integer getTermCount()
+    {
+        return termCount;
+    }
+    
+    public Double getTermTfIdf(String term)
+    {
+        return termTfIdf.get(term);
+    } 
+
     //#endregion
 
     //#region Setters
@@ -59,12 +77,19 @@ public class Module
         this.index = index;
     }
 
+    public void setTermTfIdf(String term, double tfIdf)
+    {
+        termTfIdf.put(term, tfIdf);
+    }
+
     //#endregion
 
     //#region Public Methods
 
     public void setTerm(String term)
     {
+        this.termCount++;
+
         Integer frequency = null;
 
         if (termFrequency.containsKey(term))
@@ -76,11 +101,34 @@ public class Module
         termFrequency.put(term, frequency == null ? 1 : frequency);
     }
 
+    public Set<String> getTerms()
+    {
+        return termFrequency.keySet();
+    }
+
     public Integer getTermFrequency(String term)
     {
         return termFrequency.containsKey(term) 
                 ? termFrequency.get(term) 
                 : null;
+    }
+
+    public List<KeyValuePair> getMostRelevant()
+    {
+        PriorityQueue<KeyValuePair> queue = new PriorityQueue<>();
+
+        for (Map.Entry<String, Double> entry : termTfIdf.entrySet()) 
+        {
+            KeyValuePair pair = new KeyValuePair(entry.getKey(), entry.getValue());
+            queue.add(pair);
+        }
+
+        List<KeyValuePair> topTen = new ArrayList<>();
+
+        for (int i = 0; i < 10 && !queue.isEmpty(); i++) 
+            topTen.add(queue.poll());
+
+        return topTen;
     }
 
     public void setBiGram(String biGram)
