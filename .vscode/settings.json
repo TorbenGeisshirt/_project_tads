@@ -1,0 +1,9 @@
+{
+    "java.project.referencedLibraries": [
+        "lib/**/*.jar",
+        "pdfbox-2.0.27/pdfbox-app-2.0.27.jar",
+        "lucene-9.4.2/modules/lucene-analysis-common-9.4.2.jar",
+        "lucene-9.4.2/modules/lucene-core-9.4.2.jar",
+        "lucene-9.4.2/modules/lucene-queryparser-9.4.2.jar"
+    ]
+}
