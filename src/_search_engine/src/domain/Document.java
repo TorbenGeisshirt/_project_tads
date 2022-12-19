@@ -1,8 +1,6 @@
 
 package domain;
 
-import core.KeyValuePair;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;

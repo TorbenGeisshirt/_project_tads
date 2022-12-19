@@ -1,8 +1,8 @@
 
 import domain.Module;
 import domain.Document;
-import core.KeyValuePair;
 import foundation.Engine;
+import core.KeyValuePair;
 
 import java.util.List;
 
@@ -20,16 +20,14 @@ public class App
             );
 
         Engine engine = new Engine(document);
-
-        StringBuilder stringBuilder = new StringBuilder();
-
-        String index = engine.buildIndex();
-
-        engine.buildSynonyms("./res/synonyma.txt");
+            engine.buildIndex();
+            engine.buildSynonyms("./res/synonyma.txt");
 
         BufferedWriter bufferedWriter = new BufferedWriter(
             new FileWriter("./res/out/module_manual_INDEX.txt")
             );
+
+        StringBuilder stringBuilder = new StringBuilder();
 
         for (Module module : document.getModules()) 
         {
