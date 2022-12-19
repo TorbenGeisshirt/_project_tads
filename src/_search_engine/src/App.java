@@ -1,9 +1,10 @@
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 
 import domain.Document;
 import foundation.Engine;
+
+import java.io.FileWriter;
+import java.io.BufferedWriter;
 
 public class App 
 {
@@ -15,8 +16,12 @@ public class App
             "./res/module_manual_IMACS.pdf"
             );
 
-        document.writeContentToFile(
+        document.writeDocumentToFile(
             "./res/out/module_manual_IMACS.txt"
+            );
+
+        document.writeModulesToFile(
+            "./res/out/module_manual_MODULES.txt"
             );
 
         Engine engine = new Engine(document);

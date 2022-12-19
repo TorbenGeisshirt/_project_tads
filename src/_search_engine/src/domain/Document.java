@@ -90,7 +90,7 @@ public class Document
 
     //#region Public Methods
 
-    public void writeContentToFile(String filepath) 
+    public void writeDocumentToFile(String filepath) 
         throws 
             IOException,
             NullPointerException,
@@ -109,6 +109,46 @@ public class Document
                 );
 
             bufferedWriter.write(getContent());
+            bufferedWriter.close();
+        }
+        catch (IOException ioException) {
+            throw ioException;
+        }
+    }
+
+    public void writeModulesToFile(String filepath)
+        throws 
+            IOException,
+            NullPointerException,
+            FileNotFoundException
+    {
+        if (filepath == null)
+            throw new NullPointerException("Parameter 'filepath' is null."); 
+
+        if (filepath.trim().length() == 0)
+            throw new FileNotFoundException("Parameter 'filepath' is blank.");
+
+        try 
+        {
+            BufferedWriter bufferedWriter = new BufferedWriter(
+                new FileWriter(filepath)
+                );
+
+            StringBuilder stringBuilder = new StringBuilder();
+
+            for (Module module : getModules()) 
+            {
+                stringBuilder
+                    .append(module.getTitle())
+                    .append(System.getProperty("line.separator"));
+
+                stringBuilder
+                    .append(module.getContent())
+                    .append(System.getProperty("line.separator"))
+                    .append(System.getProperty("line.separator"));
+            }
+
+            bufferedWriter.write(stringBuilder.toString());
             bufferedWriter.close();
         }
         catch (IOException ioException) {
