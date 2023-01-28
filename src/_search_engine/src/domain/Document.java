@@ -67,6 +67,7 @@ public class Document
     //#region Constants
 
     private final String ModuleIdentifier = "[Mm]odul[e]? [Nn]ame";
+    private final String QualificationIdentifier = "[Qq]ualification? [Tt]arget[s]";
 
     //#endregion
 
@@ -210,7 +211,11 @@ public class Document
                 System.getProperty("line.separator"), 2
                 )[1].trim();
 
-            modules.add(new Module(moduleTitle, moduleContent));
+            String qualifications = moduleContent.split(QualificationIdentifier)[1];
+
+            String content = qualifications.split("[Mm]odul[e]? [Cc]ontent[s]?")[0];
+
+            modules.add(new Module(moduleTitle, content));
         }
 
         return modules;

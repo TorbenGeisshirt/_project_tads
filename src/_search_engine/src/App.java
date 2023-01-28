@@ -31,14 +31,38 @@ public class App
 
         for (Module module : document.getModules()) 
         {
-            List<KeyValuePair> topTen = module.getMostRelevant();
+            List<KeyValuePair> topTerms = module.getTopTerms();
+            List<KeyValuePair> topBiGrams = module.getTopBiGrams();
+            List<KeyValuePair> topTriGrams = module.getTopTriGrams();
 
             stringBuilder
                 .append(module.getIndex())
                 .append(System.getProperty("line.separator"))
                 .append(System.getProperty("line.separator"));
             
-            for (KeyValuePair pair : topTen)
+            for (KeyValuePair pair : topTerms)
+                stringBuilder
+                    .append(pair.getKey())
+                    .append(" : ")
+                    .append(pair.getValue())
+                    .append(System.getProperty("line.separator"));
+
+                stringBuilder
+                    .append(System.getProperty("line.separator"))
+                    .append(System.getProperty("line.separator"));
+
+            for (KeyValuePair pair : topBiGrams)
+                stringBuilder
+                    .append(pair.getKey())
+                    .append(" : ")
+                    .append(pair.getValue())
+                    .append(System.getProperty("line.separator"));
+
+                stringBuilder
+                    .append(System.getProperty("line.separator"))
+                    .append(System.getProperty("line.separator"));
+
+            for (KeyValuePair pair : topTriGrams)
                 stringBuilder
                     .append(pair.getKey())
                     .append(" : ")
@@ -60,5 +84,8 @@ public class App
         document.writeModulesToFile(
             "./res/out/module_manual_MODULES.txt"
             );
+
+
+        engine.performEscoMatching();
     }
 }

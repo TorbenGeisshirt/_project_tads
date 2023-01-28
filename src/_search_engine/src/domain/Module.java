@@ -31,13 +31,18 @@ public class Module
     private String title = null;
     private String index = null;
     private String content = null;
-    private Integer termCount = 0;
 
-    private final Map<String, Double>  termTfIdf = new HashMap<>();  
+    private Integer termCount = 0;
+    private Integer biGramCount = 0;
+    private Integer triGramCount = 0;
+
+    private final Map<String, Double>  termTfIdf = new HashMap<>();
+    private final Map<String, Double>  biGramTfIdf = new HashMap<>();
+    private final Map<String, Double>  triGramTfIdf = new HashMap<>();
+
     private final Map<String, Integer> termFrequency = new HashMap<>();
     private final Map<String, Integer> biGramFrequency = new HashMap<>();
     private final Map<String, Integer> triGramFrequency = new HashMap<>();
-    private final Map<String, Integer> quadGramFrequency = new HashMap<>();
 
     //#endregion
 
@@ -63,9 +68,29 @@ public class Module
         return termCount;
     }
     
+    public Integer getBiGramCount()
+    {
+        return biGramCount;
+    }
+    
+    public Integer getTriGramCount()
+    {
+        return triGramCount;
+    }
+    
     public Double getTermTfIdf(String term)
     {
         return termTfIdf.get(term);
+    } 
+
+    public Double getBiGramTfIdf(String term)
+    {
+        return biGramTfIdf.get(term);
+    } 
+
+    public Double getTriGramTfIdf(String term)
+    {
+        return triGramTfIdf.get(term);
     } 
 
     //#endregion
@@ -80,6 +105,16 @@ public class Module
     public void setTermTfIdf(String term, double tfIdf)
     {
         termTfIdf.put(term, tfIdf);
+    }
+
+    public void setBiGramTfIdf(String biGram, double tfIdf)
+    {
+        biGramTfIdf.put(biGram, tfIdf);
+    }
+
+    public void setTriGramTfIdf(String triGram, double tfIdf)
+    {
+        triGramTfIdf.put(triGram, tfIdf);
     }
 
     //#endregion
@@ -113,7 +148,7 @@ public class Module
                 : null;
     }
 
-    public List<KeyValuePair> getMostRelevant()
+    public List<KeyValuePair> getTopTerms()
     {
         PriorityQueue<KeyValuePair> queue = new PriorityQueue<>();
 
@@ -123,16 +158,59 @@ public class Module
             queue.add(pair);
         }
 
-        List<KeyValuePair> topTen = new ArrayList<>();
+        List<KeyValuePair> topThree = new ArrayList<>();
 
-        for (int i = 0; i < 10 && !queue.isEmpty(); i++) 
-            topTen.add(queue.poll());
+        for (int i = 0; i < 3 && !queue.isEmpty(); i++) 
+            topThree.add(queue.poll());
 
-        return topTen;
+        return topThree;
+    }
+
+    public List<KeyValuePair> getTopBiGrams()
+    {
+        PriorityQueue<KeyValuePair> queue = new PriorityQueue<>();
+
+        for (Map.Entry<String, Double> entry : biGramTfIdf.entrySet()) 
+        {
+            KeyValuePair pair = new KeyValuePair(entry.getKey(), entry.getValue());
+            queue.add(pair);
+        }
+
+        List<KeyValuePair> topTwo = new ArrayList<>();
+
+        for (int i = 0; i < 2 && !queue.isEmpty(); i++) 
+            topTwo.add(queue.poll());
+
+        return topTwo;
+    }
+
+    public List<KeyValuePair> getTopTriGrams()
+    {
+        PriorityQueue<KeyValuePair> queue = new PriorityQueue<>();
+
+        for (Map.Entry<String, Double> entry : triGramTfIdf.entrySet()) 
+        {
+            KeyValuePair pair = new KeyValuePair(entry.getKey(), entry.getValue());
+            queue.add(pair);
+        }
+
+        List<KeyValuePair> topTriGram = new ArrayList<>();
+
+        for (int i = 0; i < 1 && !queue.isEmpty(); i++) 
+            topTriGram.add(queue.poll());
+
+        return topTriGram;
+    }
+
+    public Set<String> getBiGrams()
+    {
+        return biGramFrequency.keySet();
     }
 
     public void setBiGram(String biGram)
     {
+        this.biGramCount++;
+
         Integer frequency = null;
 
         if (biGramFrequency.containsKey(biGram))
@@ -151,8 +229,15 @@ public class Module
                 : null;
     }
 
+    public Set<String> getTriGrams()
+    {
+        return triGramFrequency.keySet();
+    }
+
     public void setTriGram(String triGram)
     {
+        this.triGramCount++;
+
         Integer frequency = null;
 
         if (triGramFrequency.containsKey(triGram))
@@ -168,26 +253,6 @@ public class Module
     {
         return triGramFrequency.containsKey(triGram) 
                 ? triGramFrequency.get(triGram) 
-                : null;
-    }
-
-    public void setQuadGram(String quadGram)
-    {
-        Integer frequency = null;
-
-        if (quadGramFrequency.containsKey(quadGram))
-        {
-            frequency = quadGramFrequency.get(quadGram);
-            frequency++;
-        }
-
-        quadGramFrequency.put(quadGram, frequency == null ? 1 : frequency);
-    }
-
-    public Integer getQuadGramFrequency(String quadGram)
-    {
-        return quadGramFrequency.containsKey(quadGram) 
-                ? quadGramFrequency.get(quadGram) 
                 : null;
     }
 

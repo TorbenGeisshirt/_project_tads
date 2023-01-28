@@ -2,19 +2,32 @@
 package foundation;
 
 import core.NGram;
+import core.KeyValuePair;
+
 import domain.Module;
 import domain.Document;
+import domain.EscoModel;
+import domain.EscoSkill;
 
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+
 import java.util.Set;
 import java.util.Map;
 import java.util.HashSet;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.regex.Pattern;
+
+import org.json.*;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
@@ -44,6 +57,10 @@ public class Engine
     }
 
     //#region Members
+
+    private final HttpClient httpClient = HttpClient.newBuilder()
+            .version(HttpClient.Version.HTTP_2)
+            .build();
 
     private Document document = null;
     private Map<String, Set<String>> synonyma = new HashMap<>();
@@ -247,9 +264,6 @@ public class Engine
 
                 for (String triGram : NGram.getTriGrams(indexPerModule) )
                     module.setTriGram(triGram);
-
-                for (String quadGram : NGram.getQuadGrams(indexPerModule) )
-                    module.setQuadGram(quadGram);
             } 
             finally {
                 tokenStream.close();
@@ -262,11 +276,12 @@ public class Engine
             analyzer.close();
         }
 
+        // Term TF-IDF
         for (Module module : document.getModules()) 
         {
             for (String term : module.getTerms()) 
             {
-                double docCnt = ( double )(document.getModules().size() );
+                double docCnt = ( double )(document.getModules().size());
                 double docOcc = 1;
 
                 for (Module x : document.getModules())
@@ -290,7 +305,157 @@ public class Engine
             }
         }
 
+        // Bi-Gram TF-IDF
+        for (Module module : document.getModules())
+        {
+            for (String biGram : module.getBiGrams()) 
+            {
+                double docCnt = ( double )(document.getModules().size());
+                double docOcc = 1;
+
+                for (Module x : document.getModules())
+                    if (x.getBiGrams().contains(biGram))
+                        docOcc++;
+
+                double modCnt = module.getBiGramCount().doubleValue();
+                double modFrq = module.getBiGramFrequency(biGram).doubleValue();
+
+                double idf = Math.log(
+                    docCnt / docOcc
+                    );
+                    
+                double tf = modFrq / modCnt;
+    
+                double biGramTfIdf = (tf * idf);
+    
+                module.setBiGramTfIdf(
+                    biGram, biGramTfIdf
+                    );
+            }
+        }
+
+        // Tri-Gram TF-IDF
+        for (Module module : document.getModules())
+        {
+            for (String triGram : module.getTriGrams()) 
+            {
+                double docCnt = ( double )(document.getModules().size());
+                double docOcc = 1;
+
+                for (Module x : document.getModules())
+                    if (x.getTriGrams().contains(triGram))
+                        docOcc++;
+
+                double modCnt = module.getTriGramCount().doubleValue();
+                double modFrq = module.getTriGramFrequency(triGram).doubleValue();
+
+                double idf = Math.log(
+                    docCnt / docOcc
+                    );
+                    
+                double tf = modFrq / modCnt;
+    
+                double triGramTfIdf = (tf * idf);
+    
+                module.setTriGramTfIdf(
+                    triGram, triGramTfIdf
+                    );
+            }
+        }
+
         return indexBuilder.toString();
+    }
+
+    public List<EscoModel> performEscoMatching()
+    {
+        // TODO
+        /*
+        client.sendAsync(request, BodyHandlers.ofString())
+            .thenApply(HttpResponse::body)
+            .thenAccept(System.out::println)
+            .join();
+        */
+
+        List<EscoModel> results = new ArrayList<>();
+
+        final String baseUrl = "https://ec.europa.eu/esco/api/";
+        final String baseFunction = "search?";
+
+        final String paramType = "&type=skill";
+        final String paramLimit = "&limit=10";
+        final String paramLanguage = "&language=en";
+
+        for (Module module : document.getModules())
+        {
+            List<KeyValuePair> searchTexts = module.getTopTerms();
+                searchTexts.addAll(module.getTopBiGrams());
+                searchTexts.addAll(module.getTopTriGrams());
+
+            for (KeyValuePair keyValuePair : searchTexts)
+            {
+                List<EscoSkill> escoSkills = new ArrayList<>();
+
+                StringBuilder builder = new StringBuilder();
+                    builder
+                        .append(baseUrl)
+                        .append(
+                            "text=" + keyValuePair.getKey()
+                            )
+                        .append(paramType)
+                        .append(paramLimit)
+                        .append(paramLanguage);
+
+                HttpRequest request = HttpRequest.newBuilder()
+                    .GET()
+                    .uri(
+                        URI.create(builder.toString())
+                        )
+                    .build();
+
+                try
+                {
+                    HttpResponse<String> response = httpClient.send(
+                        request, HttpResponse.BodyHandlers.ofString()
+                        );
+
+                    JSONObject responseBody = new JSONObject(response.body());
+
+                    JSONArray skillArray = responseBody
+                        .getJSONObject("_embedded")
+                        .getJSONArray("results");
+                        
+                    for (int i = 0; i < skillArray.length(); i++)
+                    {
+                        String title = skillArray.getJSONObject(i).getString("title");
+                        String uri   = skillArray.getJSONObject(i).getString("uri");
+
+                        EscoSkill escoSkill = new EscoSkill(
+                            title, uri
+                            );
+
+                        HttpRequest requestForSkill = HttpRequest.newBuilder()
+                            .GET()
+                            .uri(
+                                URI.create(baseUrl + "skill?uris=" + uri)
+                                )
+                            .build();
+
+                        HttpResponse<String> responseForSkill = httpClient.send(
+                            requestForSkill, HttpResponse.BodyHandlers.ofString()
+                            );
+
+                        JSONObject responseForSkillBody = new JSONObject(responseForSkill.body());
+
+                        
+                    }
+                }
+                catch (IOException | InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return null;
     }
 
     //#endregion
