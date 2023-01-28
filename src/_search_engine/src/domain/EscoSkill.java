@@ -36,12 +36,12 @@ public class EscoSkill
         return this.uri;
     }
 
-    private List<EscoOccu> getEssentialFor()
+    public List<EscoOccu> getEssentialFor()
     {
         return essentialOccupations;
     }
 
-    private List<EscoOccu> getOptionalFor()
+    public List<EscoOccu> getOptionalFor()
     {
         return optionalOccupations;
     }

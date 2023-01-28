@@ -7,6 +7,7 @@ import core.KeyValuePair;
 import domain.Module;
 import domain.Document;
 import domain.EscoModel;
+import domain.EscoOccu;
 import domain.EscoSkill;
 
 import java.io.FileReader;
@@ -382,7 +383,7 @@ public class Engine
         final String baseFunction = "search?";
 
         final String paramType = "&type=skill";
-        final String paramLimit = "&limit=10";
+        final String paramLimit = "&limit=3";
         final String paramLanguage = "&language=en";
 
         for (Module module : document.getModules())
@@ -391,15 +392,16 @@ public class Engine
                 searchTexts.addAll(module.getTopBiGrams());
                 searchTexts.addAll(module.getTopTriGrams());
 
+            List<EscoSkill> escoSkills = new ArrayList<>();
+
             for (KeyValuePair keyValuePair : searchTexts)
             {
-                List<EscoSkill> escoSkills = new ArrayList<>();
-
                 StringBuilder builder = new StringBuilder();
                     builder
                         .append(baseUrl)
+                        .append(baseFunction)
                         .append(
-                            "text=" + keyValuePair.getKey()
+                            "text=" + keyValuePair.getKey().replaceAll(" ", "%20")
                             )
                         .append(paramType)
                         .append(paramLimit)
@@ -436,7 +438,7 @@ public class Engine
                         HttpRequest requestForSkill = HttpRequest.newBuilder()
                             .GET()
                             .uri(
-                                URI.create(baseUrl + "skill?uris=" + uri)
+                                URI.create(baseUrl + "resource/skill?uris=" + uri)
                                 )
                             .build();
 
@@ -446,16 +448,60 @@ public class Engine
 
                         JSONObject responseForSkillBody = new JSONObject(responseForSkill.body());
 
-                        
+                        JSONObject skillReference = responseForSkillBody
+                            .getJSONObject("_embedded")
+                            .getJSONObject(uri);
+
+                        String description = skillReference
+                            .getJSONObject("description")
+                            .getJSONObject("en")
+                            .getString("literal");
+
+                        JSONObject skillLinks = skillReference
+                            .getJSONObject("_links");
+
+                        if (skillLinks.has("isEssentialForOccupation"))
+                        {
+                            JSONArray occupations = skillLinks.getJSONArray("isEssentialForOccupation");
+
+                            for (int j = 0; j < occupations.length(); j++)
+                            {
+                                String occTitle = occupations.getJSONObject(j).getString("title");
+                                String occUri = occupations.getJSONObject(j).getString("uri");
+
+                                escoSkill.addEssentialFor(
+                                    new EscoOccu(occTitle, occUri)
+                                    );
+                            }
+                        }
+
+                        if (skillLinks.has("isOptionalForOccupation"))
+                        {
+                            JSONArray occupations = skillLinks.getJSONArray("isOptionalForOccupation");
+
+                            for (int j = 0; j < occupations.length(); j++)
+                            {
+                                String occTitle = occupations.getJSONObject(j).getString("title");
+                                String occUri = occupations.getJSONObject(j).getString("uri");
+
+                                escoSkill.addEssentialFor(
+                                    new EscoOccu(occTitle, occUri)
+                                    );
+                            }
+                        }
+
+                        escoSkills.add(escoSkill);
                     }
                 }
                 catch (IOException | InterruptedException e) {
                     e.printStackTrace();
                 }
             }
+
+            results.add(new EscoModel(module, escoSkills));
         }
 
-        return null;
+        return results;
     }
 
     //#endregion

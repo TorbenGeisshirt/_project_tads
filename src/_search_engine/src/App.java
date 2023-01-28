@@ -1,8 +1,11 @@
 
+import core.KeyValuePair;
+
 import domain.Module;
 import domain.Document;
+import domain.EscoModel;
+
 import foundation.Engine;
-import core.KeyValuePair;
 
 import java.util.List;
 
@@ -29,7 +32,7 @@ public class App
 
         StringBuilder stringBuilder = new StringBuilder();
 
-        for (Module module : document.getModules()) 
+        for (Module module : document.getModules())
         {
             List<KeyValuePair> topTerms = module.getTopTerms();
             List<KeyValuePair> topBiGrams = module.getTopBiGrams();
@@ -86,6 +89,21 @@ public class App
             );
 
 
-        engine.performEscoMatching();
+        List<EscoModel> escoModels = engine.performEscoMatching();
+
+        StringBuilder modelBuilder = new StringBuilder();
+        
+        for (EscoModel model : escoModels)
+            modelBuilder
+                .append(model.toString())
+                .append(System.getProperty("line.separator"))
+                .append(System.getProperty("line.separator"));
+
+        BufferedWriter modelWriter = new BufferedWriter(
+            new FileWriter("./res/out/esco_matching_DEBUG.txt")
+            );
+        
+        modelWriter.write(modelBuilder.toString());
+        modelWriter.close();
     }
 }
